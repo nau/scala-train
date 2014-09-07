@@ -3,38 +3,56 @@ package org.scalatrain.basic
 object Syntax {
 
   def main(args: Array[String]): Unit = {
+    println("======= Keywords ======\n")
     keywords(args)
+    println("======= Basic Types And Literals ======\n")
     basicTypesAndLiterals()
-    // Questions and Coffee-break with
+    println("======= Operators ======\n")
+    operators()
+    println("======= Sugar ======\n")
     sugar()
+    println("======= Functions ======\n")
+    functions()
+    println("======= Higher Order Functions ======\n")
+    hof()
+    println("======= Currying ======\n")
+    currying()
+    println("======= Implicits ======\n")
+    implicits()
+    println("=============\n")
   }
 
-  def keywords(args: Array[String]) = {
+  def keywords(args: Array[String]): Unit = {
+    // Imports
     import java.util.Date
+    import java.lang.{Long=>JLong, _}
+    import java.{util=>jutil}
+    import jutil.{Map=>_, _}
     import java.lang.Integer.bitCount
     bitCount(1)
 
-    import java.io._
-    import File._
-    pathSeparator
+    import args._
+    length
 
     // final int constant = 1
     val constant: Int = 1
 
     // long i = 0
-    var i = 0L
+    var i = 0L: Long // type ascription
 
     //var j: Int = i // Won't compile
+    val j: Int = i.asInstanceOf[Int]
+    j.isInstanceOf[Int]
 
     val xml = <bean>Can't live without Spring</bean>; println(xml)
 
-    def calc() = {
+    def calc = {
       println("Calculating the truth")
       Thread.sleep(1000)
       true
     }
 
-    lazy val how = if (calc()) "hehe" else "haha"
+    lazy val how = if (calc) "Scala" else "Java"
 
     while (i < 10) i += 1
 
@@ -44,14 +62,16 @@ object Syntax {
     for (arg <- args)
       println(arg)
 
-    if (how.equals("hehe") || (how == "haha") || (how eq null)) println("bugaga")
+    if (how.equals("Scala") || (how == "Java") && (how.eq(null)) || (how ne null)) println("bugaga")
+
+    val num = how match {
+      case "Scala" => 1
+      case "Java" => 2
+      case any => return
+    }
 
     val result = try {
-       how match {
-        case "hehe" => 1
-        case "haha" => 2
-        case any => any.toInt
-      }
+       "one".toInt
     } catch {
       case e: Exception => 0
     } finally {
@@ -87,19 +107,23 @@ object Syntax {
     println(l)
 
 
-    val m: Symbol = 'OK
+    val m: Symbol = 'OK // Erlang's Atom
     val n: Symbol = 'WTF
     val o = Symbol("OK")
     println(s"m == n ${m == n}, m == o ${m == o}")
+
+    val p: Tuple3[Int, String, Boolean] = (1, "one", true)
 
     val q: Function1[String, Boolean] = (s: String) => s.isEmpty()
 
     val x: Unit = ()
     val y: Null = null
-    val z: Nothing = throw new RuntimeException("It's never gonna happen.")
+    lazy val z: Nothing = throw new RuntimeException("It's never gonna happen.")
   }
 
-  def sugar() = {
+  def operators() = {
+    // Binary operators
+
     // Infix
     1 + 2 == 1.+(2)
     1 == 1 == 1.==(1)
@@ -112,18 +136,32 @@ object Syntax {
 
     println(i)
 
+    // Prefix unary operators: +, -, !, and ~
+    class U {
+      def unary_! = println("!!!")
+
+      // right associative operators end with ':'
+      def +:(i: Int) = println(s"+: $i")
+    }
+    val u = new U
+    !u
+    u.unary_!
+
+    2 +: u // same as u.+:(2)
+  }
+
+  def sugar() = {
     // Apply
     val f = (s: String) => s.isEmpty()
     f.apply("Not empty") // false
     f("") // true
 
-    class Callable {
+    object Callable {
       def apply() = println("Called!")
     }
 
-    val c = new Callable
-    c.apply()
-    c()
+    Callable.apply()
+    Callable()
 
     // Update
     class Updatable {
@@ -135,9 +173,117 @@ object Syntax {
   }
 
   def functions(): Unit = {
-    // Functions & Lambdas
+    // Named arguments, default values, multiple argument lists, call-by name arguments
+    def uberFunction(arg1: String, arg2: Int = 0)(body: => Unit) = {
+      println(arg1)
+      body
+      println(arg2)
+    }
+
+    uberFunction("Hello", 1)(println("World"))
+
+    uberFunction("Hello")(println("World"))
+
+    uberFunction(arg2 = 2, arg1 = "Hello") {
+      println("World")
+    }
+
+    def IfElse(pred: Boolean)(cons: => Unit)(alt: => Unit) = if (pred) cons else alt
+    IfElse (true) {
+      println("In truth we trust")
+    } {
+      println("Or not")
+    }
+
+    def varargs(args: String*) = println(args)
+    varargs()
+    varargs("one")
+    varargs("one", "two")
+
+    // Anonymous Functions
     def isEmpty(arg: String): Boolean = arg.isEmpty // type is Function1[String, Boolean]
-    val isEmpty2 = (arg: String) => arg.isEmpty
+    val isEmpty2 = (arg: String) => arg.isEmpty // also can be written as (String => Boolean)
+
+    val isEmpty3 = new Function1[String, Boolean] {
+      override def apply(v1: String): Boolean = v1.isEmpty
+    }
+
+    val isEmpty4 = isEmpty _ // eta expansion
+
+    isEmpty("") == isEmpty2("") == isEmpty3("") == isEmpty4("")
+
   }
 
+  def hof(): Unit = {
+    // Command Pattern
+    /*
+    public interface Command {
+      void execute();
+    }
+    public class MyCommand implements Command {
+      public void execute() {
+        System.out.println("MyCommand");
+      }
+    }
+    public void doCommand(Command command) { command.execute(); }
+     */
+    def doCommand(f: () => Unit) = f
+    doCommand(() => println("MyCommand"))
+
+    // Strategy Pattern
+    def filter(ints: Array[Int], p: Int => Boolean) =
+      for (i <- ints) if (p(i)) println(s"Filter $i")
+
+    val array = Array(1, 2, 3)
+
+    filter(array, (i: Int) => i > 2)
+    filter(array, (i) => i > 2)
+    filter(array, i => i > 2)
+    filter(array, _ > 2)
+
+    // Factory, Converter
+    def createFactory: Int => String = (i) => i.toString
+  }
+
+  def currying(): Unit = {
+
+  }
+
+  def implicits(): Unit = {
+
+    // implicit defs
+    class Complex(val real: Double, val imaginary: Double = 0.0) {
+      def + (rhs: Complex): Complex = new Complex(real + rhs.real, imaginary + rhs.imaginary)
+    }
+
+    val c = new Complex(1.0)
+
+    implicit def int2Complex(i: Int): Complex = new Complex(i)
+
+    // Conversions to an expected type
+    val i: Complex = 1
+
+    def foo(c: Complex) = println(c.real)
+
+    foo(2)
+
+    // Conversions of the receiver of a selection
+    println(2.imaginary)
+    println((2 + i).real)
+
+    // Implicit parameters
+    def bar(s: Int)(implicit convertor: Int => Complex): Complex = convertor(s)
+
+    bar(123)
+
+    class Config { val url = "https://github.com/nau/jscala" }
+
+    implicit val config = new Config
+
+    def contextual(msg: String)(implicit c: Config) = {
+      c.url
+      import c._
+      url
+    }
+  }
 }
