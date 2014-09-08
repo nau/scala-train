@@ -75,7 +75,7 @@ object Syntax {
     } catch {
       case e: Exception => 0
     } finally {
-      4
+      println("Finally, only side-effects here.")
     }
     println(result)
   }
