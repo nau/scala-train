@@ -12,7 +12,7 @@ class SimpleMapTest extends FunSuite with Matchers {
 
   test("Update should put a value to SimpleMap") {
     val sm = new SimpleMap
-    //sm("key") = "value"
+//    sm("key") = "value"
     assert(sm.size == 1)
   }
 
@@ -21,7 +21,7 @@ class SimpleMapTest extends FunSuite with Matchers {
     //sm("key") = "value"
     //sm("key") should be("value")
 //    sm("don't exist") should be(null)
-    assert(sm.size == 0)
+    assert(sm.size == 1)
   }
 
   test("-= should remove key from SimpleMap") {

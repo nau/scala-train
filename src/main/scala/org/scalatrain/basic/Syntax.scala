@@ -13,19 +13,18 @@ object Syntax {
     sugar()
     println("======= Functions ======\n")
     functions()
-    println("======= Higher Order Functions ======\n")
-    hof()
-    println("======= Currying ======\n")
-    currying()
+    println("======= Partial Functions ======\n")
+    partialFunctions()
     println("======= Implicits ======\n")
     implicits()
+    usefullImplicits()
     println("=============\n")
   }
 
   def keywords(args: Array[String]): Unit = {
     // Imports
     import java.util.Date
-    import java.lang.{Long=>JLong, _}
+    import java.lang.{Long=>JLong, Integer, _}
     import java.{util=>jutil}
     import jutil.{Map=>_, _}
     import java.lang.Integer.bitCount
@@ -67,7 +66,7 @@ object Syntax {
     val num = how match {
       case "Scala" => 1
       case "Java" => 2
-      case any => return
+      case _ => return
     }
 
     val result = try {
@@ -130,8 +129,6 @@ object Syntax {
 
     // Postfix, not recommended
     val one = 1 toString // newline is required here!
-
-    // one.concat("0").charAt(0).toInt
     val i = one concat "0" charAt 0
 
     println(i)
@@ -214,39 +211,34 @@ object Syntax {
 
   }
 
-  def hof(): Unit = {
-    // Command Pattern
-    /*
-    public interface Command {
-      void execute();
+  def partialFunctions() = {
+    def isDigit(s: String) = try {
+      Integer.valueOf(s)
+      true
+    } catch {
+      case e: NumberFormatException => false
     }
-    public class MyCommand implements Command {
-      public void execute() {
-        System.out.println("MyCommand");
-      }
+
+    val pf = new PartialFunction[String, Int] {
+      override def isDefinedAt(x: String): Boolean = isDigit(x)
+
+      override def apply(v1: String): Int = Integer.valueOf(v1)
     }
-    public void doCommand(Command command) { command.execute(); }
-     */
-    def doCommand(f: () => Unit) = f
-    doCommand(() => println("MyCommand"))
 
-    // Strategy Pattern
-    def filter(ints: Array[Int], p: Int => Boolean) =
-      for (i <- ints) if (p(i)) println(s"Filter $i")
+    def applyOrDefault(s: String, default: Int) = {
+      if (pf.isDefinedAt(s)) pf(s) else default
+    }
 
-    val array = Array(1, 2, 3)
+    println(applyOrDefault("1 2 3", 0))
 
-    filter(array, (i: Int) => i > 2)
-    filter(array, (i) => i > 2)
-    filter(array, i => i > 2)
-    filter(array, _ > 2)
+    println(applyOrDefault("123", 0))
 
-    // Factory, Converter
-    def createFactory: Int => String = (i) => i.toString
-  }
+    val pf2: PartialFunction[String, Int] = {
+      case s: String if isDigit(s) => Integer.valueOf(s)
+    }
 
-  def currying(): Unit = {
-
+    println(pf2.isDefinedAt("1 2 3"))
+    println(pf2("123"))
   }
 
   def implicits(): Unit = {
@@ -286,4 +278,18 @@ object Syntax {
       url
     }
   }
+
+  def usefullImplicits() = {
+    1 -> "one" == (1, "one")
+    1 →  "one" == (1, "one")
+
+    "1".toInt
+
+    val str = "abc"
+
+    str.charAt(0) == str(0)
+
+    val regex = "M | [IN]|B".r
+  }
+
 }
