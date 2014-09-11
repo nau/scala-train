@@ -8,13 +8,13 @@ class SimpleMapHofTest extends FunSuite with Matchers {
   test("SimpleMap should have filterKey function") {
     val sm = new SimpleMap
     //sm("key") = "value"
-    sm.filterKey(_ == "key").size should be (0)
+    sm.filterKey(_ != "key").size should be (0)
   }
 
   test("SimpleMap should have filter function") {
     val sm = new SimpleMap
     //sm("key") = "value"
-    sm.filter(_ == ("key", "value")).size should be (0)
+    sm.filter(_ != ("key", "value")).size should be (0)
   }
 
   test("SimpleMap should have map function") {
