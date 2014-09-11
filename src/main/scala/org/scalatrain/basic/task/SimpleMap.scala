@@ -7,6 +7,6 @@ class SimpleMap {
   def map(p: ((String, String)) => (String, String)): SimpleMap = ???
   def flatMap(p: ((String, String)) => SimpleMap): SimpleMap = ???
   def fold(zero: String)(acc: (String, (String, String)) => String): String = ???
-  def collect(pf: PartialFunction[String, String]): SimpleMap = ???
+  def collect(pf: PartialFunction[(String, String), (String, String)]): SimpleMap = ???
   def get(k: String): Option[String] = ???
 }

@@ -35,4 +35,12 @@ class SimpleMapHofTest extends FunSuite with Matchers {
     //    sm("key") = "value"
     sm.fold(""){ case (acc, kv) => acc + kv._1 + kv._2 } should be ("keyvalue")
   }
+
+  test("SimpleMap should have collect, get, and apply constructor") {
+//    val sm = SimpleMap("key" -> "value", "key1" -> "")
+//    val res = sm.collect{ case (k, v) if v.startsWith("val") => k -> "var" }
+//    res.size should be (2)
+//    res.get("key") should be(Some("var"))
+//    res.get("key1") should be(Some(""))
+  }
 }

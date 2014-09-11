@@ -1,7 +1,5 @@
 package org.scalatrain.basic
 
-import java.sql.Connection
-
 object OOP {
   def main(args: Array[String]) {
     classes()
@@ -10,6 +8,7 @@ object OOP {
   def classes() = {
 
     abstract class AbstractDbService(val dbUrl: String, private var retryCount: Int = 0) {
+
       println(s"I'm ${getClass.getSimpleName} constructor")
 
       def this() = {
