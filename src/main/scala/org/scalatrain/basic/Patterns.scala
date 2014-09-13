@@ -22,6 +22,7 @@ object Patterns {
   case class JsString(value: String) extends JsExpr
   case class JsNum(value: Int) extends JsExpr
   case class JsBinOp(operator: String, lhs: JsExpr, rhs: JsExpr) extends JsExpr
+  case object JsNull extends JsExpr
 
   def caseClasses(): Unit = {
 
@@ -40,14 +41,14 @@ object Patterns {
 
       override def hashCode(): Int = value.##
 
-      def copy(newValue: String): JsStringFull = new JsStringFull(value = newValue)
+      def copy(newValue: String = this.value): JsStringFull = new JsStringFull(value = newValue)
     }
 
     object JsStringFull {
       def apply(value: String) = new JsStringFull(value)
       def unapply(x: JsStringFull): Option[String] = Some(x.value)
     }
-
+    JsStringFull("asdf")
 
     val sum = JsBinOp("+", JsNum(1), JsNum(2))
     val java = new JsBinOp("+", new JsNum(1), new JsNum(2))
@@ -101,7 +102,7 @@ object Patterns {
     println(none.orElse(some))
 
     println("------- Java and NPE -------")
-    println(Option(null))
+    println(Option("asdf"))
   }
 
   def patterns() = {
@@ -110,7 +111,7 @@ object Patterns {
     val two = 2
 
 
-    (1: Any) match {
+    (2: Any) match {
       // constant patterns
       case 1 =>
       case "sum" =>
@@ -174,6 +175,90 @@ object Patterns {
   }
 
   def forExpressions(): Unit = {
+    // Basically, for-expression converts to either:
+    // foreach
+    // map
+    // flatMap.map
+    // flatMap.flatMap.map
 
+    case class Role(name: String)
+    case class User(id: Int, name: String, email: String, age: Int, role: Role)
+
+    def getUserFromDb(id: Int): Option[User] =
+      if (id == 1) Some(User(1, "Martin", "", 50, Role("Master"))) else None
+
+
+    def saveDataForUser1(idOpt: Option[Int], dataOpt: Option[String]) = {
+      idOpt match {
+        case Some(id) => getUserFromDb(id) match {
+          case Some(user) => dataOpt match {
+            case Some(data) => println(s"Data $data saved for user $user")
+            case None =>
+          }
+          case None =>
+        }
+        case None =>
+      }
+    }
+
+
+
+    def saveDataForUser2(idOpt: Option[Int], dataOpt: Option[String]) = {
+      idOpt.foreach { case id =>
+        getUserFromDb(id).foreach { case user =>
+          dataOpt.foreach { case data =>
+            println(s"Data $data saved for user $user")
+          }
+        }
+      }
+    }
+
+
+
+    def saveDataForUser3(idOpt: Option[Int], dataOpt: Option[String]) = {
+      for (id <- idOpt; user <- getUserFromDb(id); data <- dataOpt)
+        println(s"Data $data saved for user $user")
+    }
+
+
+
+
+    def saveDataForUser4(idOpt: Option[Int], dataOpt: Option[String]) = {
+      for {
+        id <- idOpt
+        user <- getUserFromDb(id)
+        data <- dataOpt
+      } println(s"Data $data saved for user $user")
+    }
+
+    saveDataForUser1(None, None)
+    saveDataForUser2(Some(1), None)
+    saveDataForUser3(Some(2), Some("Scala rulez"))
+    saveDataForUser4(Some(1), Some("Scala rulez"))
+
+    def getUserRoleById(id: Int): Option[Role] = {
+      getUserFromDb(id).map { case user => user.role }
+
+      for (user <- getUserFromDb(id)) yield user.role
+    }
+
+    def getUserById1(idOpt: Option[Int]): Option[User] = {
+      //    val res: Option[Option[User]] = idOpt.map { case id => getUserFromDb(id) }
+      idOpt.flatMap { case id => getUserFromDb(id) }
+    }
+
+    def getUserById2(idOpt: Option[Int]) = {
+      val res = for (id <- idOpt; user <- getUserFromDb(id)) yield user
+      res
+    }
+
+    def getRoleForUserById(idOpt: Option[Int]) = {
+      for {
+        id <- idOpt
+        User(_, name, _, age, role) <- getUserFromDb(id)
+        roleName = role.name
+        if age > 21
+      } yield roleName
+    }
   }
 }
