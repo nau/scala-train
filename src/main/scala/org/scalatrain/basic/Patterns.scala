@@ -216,7 +216,9 @@ object Patterns {
 
 
     def saveDataForUser3(idOpt: Option[Int], dataOpt: Option[String]) = {
-      for (id <- idOpt; user <- getUserFromDb(id); data <- dataOpt)
+      for (id <- idOpt;
+           user <- getUserFromDb(id);
+           data <- dataOpt)
         println(s"Data $data saved for user $user")
     }
 
@@ -237,24 +239,26 @@ object Patterns {
     saveDataForUser4(Some(1), Some("Scala rulez"))
 
     def getUserRoleById(id: Int): Option[Role] = {
-      getUserFromDb(id).map { case user => user.role }
+      getUserFromDb(id) map { user => user.role }
 
       for (user <- getUserFromDb(id)) yield user.role
     }
 
     def getUserById1(idOpt: Option[Int]): Option[User] = {
-      //    val res: Option[Option[User]] = idOpt.map { case id => getUserFromDb(id) }
+//        val res: Option[Option[User]] = idOpt.map { case id => getUserFromDb(id) }
       idOpt.flatMap { case id => getUserFromDb(id) }
     }
 
     def getUserById2(idOpt: Option[Int]) = {
-      val res = for (id <- idOpt; user <- getUserFromDb(id)) yield user
+      val res = (idOpt).flatMap { case id => (getUserFromDb(id)).map { case user => user}
+      }
       res
     }
 
     def getRoleForUserById(idOpt: Option[Int]) = {
       for {
         id <- idOpt
+        _ = println(id)
         User(_, name, _, age, role) <- getUserFromDb(id)
         roleName = role.name
         if age > 21
