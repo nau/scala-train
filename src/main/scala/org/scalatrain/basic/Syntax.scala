@@ -241,12 +241,15 @@ object Syntax {
     println(pf2("123"))
   }
 
+  class Complex(val real: Double, val imaginary: Double = 0.0) {
+    def + (rhs: Complex): Complex = new Complex(real + rhs.real, imaginary + rhs.imaginary)
+    //      def +[N : Numeric](n: N) = new Complex(implicitly[Numeric[N]].plus(real, n))
+  }
+
+
   def implicits(): Unit = {
 
     // implicit defs
-    class Complex(val real: Double, val imaginary: Double = 0.0) {
-      def + (rhs: Complex): Complex = new Complex(real + rhs.real, imaginary + rhs.imaginary)
-    }
 
     val c = new Complex(1.0)
 

@@ -1,5 +1,9 @@
 package org.scalatrain.basic
 
+import java.util.Date
+
+import org.scalatrain.basic.Syntax.Complex
+
 import scala.beans.BeanProperty
 import scala.collection.mutable.ArrayBuffer
 
@@ -9,6 +13,7 @@ object OOP {
     traits()
     generics()
     typeMembers()
+    contextBounds()
   }
 
   def classes() = {
@@ -102,7 +107,7 @@ object OOP {
     println(s"I'm TwoLegged constructor")
   }
 
-  class Cat extends Animal with Furry with FourLegged {
+  class Cat extends Animal with FourLegged with Furry{
     println(s"I'm Cat constructor")
   }
 
@@ -114,7 +119,7 @@ object OOP {
     val man = new Animal with TwoLegged with HasHands
 
     def compound(animal: HasLegs with HasHands) = {}
-    //    compound(cat)   // Won't compile
+//        compound(cat)   // Won't compile
     compound(man)
 
 
@@ -124,9 +129,10 @@ object OOP {
     trait User { def name: String = getClass.getSimpleName }
     trait Tweeter {
       user: User =>
+
       def tweet(msg: String) = println(s"$name: $msg")
     }
-    // trait Wrong extends Tweeter
+//    trait Wrong extends Tweeter
     val user = new User with Tweeter
 
 
@@ -172,12 +178,23 @@ object OOP {
       }
     }
 
-    val compQ = new BasicIntQueue with Incrementing with Filtering
+    val compQ = new BasicIntQueue with Doubling with Incrementing with Filtering
     compQ.put(7)
     compQ.put(10)
     compQ.put(20)
     println(compQ.get())
     println(compQ.get())
+
+    class Config(c: Map[String, String]) {
+      def get(n: String) = c(n)
+    }
+
+    implicit val config = new Config(Map("url" -> "jscala.org"))
+    def $(key: String)(implicit config: Config) = config.get(key)
+
+
+    val url = $("url")
+
   }
 
   def generics() = {
@@ -187,19 +204,23 @@ object OOP {
 //    val j: ju.Collection[ju.Collection[Int]] = new ju.ArrayList[ju.ArrayList[Int]])()
     val ls: Traversable[Traversable[Int]] = List(List(1))
 
-    class Base[+A, B] {
-      def op(arg: B) = println(arg)
+    class Base[+A, -B] {
+//      def op(arg: A) = println(arg)
+//      def get: B = ???
     }
-//    val a: Base[Animal, Animal] = new Base[Cat, Animal]
+    val a: Base[Animal, Cat] = new Base[Cat, Animal]
 
     // Self type and generics
     trait User { def name: String = getClass.getSimpleName }
+
     trait Tweeter[A <: User] {
       user: A =>
-      def tweet(msg: String) = println(s"${user.name}: $msg")
+      def tweet[C](msg: C) = println(s"${user.name}: $msg")
+      def as[C] = this.asInstanceOf[C]
     }
     // trait Wrong extends Tweeter
     val user = new User with Tweeter[User]
+    user.tweet[String]("asdf")
   }
 
   def typeMembers() = {
@@ -225,5 +246,70 @@ object OOP {
     val l2 = new CatList
     l2.printDependent(l2.create)
 //    l2.printDependent(l1.create)
+  }
+
+  def contextBounds() = {
+    def calculate1[A : Numeric](a: A, b: A) = {
+
+
+
+    }
+    def calculate2[A](a: A, b: A)(implicit ev1: Numeric[A]) = {
+      ev1.plus(a, b)
+    }
+
+    println(calculate2(2, 3))
+    println(calculate2(2.5, 3.5))
+    println(calculate2(BigDecimal(3), BigDecimal(3)))
+    implicit object ComplexNumeric extends Numeric[Complex] {
+      override def plus(x: Complex, y: Complex): Complex = new Complex(x.real + y.real, x.imaginary + y.imaginary)
+
+      override def toDouble(x: Complex): Double = ???
+
+      override def toFloat(x: Complex): Float = ???
+
+      override def toInt(x: Complex): Int = ???
+
+      override def negate(x: Complex): Complex = ???
+
+      override def fromInt(x: Int): Complex = ???
+
+      override def toLong(x: Complex): Long = ???
+
+      override def times(x: Complex, y: Complex): Complex = ???
+
+      override def minus(x: Complex, y: Complex): Complex = ???
+
+      override def compare(x: Complex, y: Complex): Int = ???
+    }
+
+    calculate2(new Complex(1), new Complex(2))
+
+
+    def bean[A : Manifest](f: A => Unit): A = {
+      val a = implicitly[Manifest[A]].runtimeClass.newInstance.asInstanceOf[A]
+      f(a)
+      a
+    }
+    println(bean[Date](d => d.setTime(0)))
+
+
+    trait Match[A] {
+      def getTypeName: String
+    }
+    implicit object StringMatch extends Match[String] {
+      override def getTypeName: String = "String"
+    }
+    implicit object ListStringMatch extends Match[List[String]] {
+      override def getTypeName: String = "List[String]"
+    }
+
+    def strange[A : Match](arg: A) = {
+      implicitly[Match[A]].getTypeName
+    }
+
+    println(strange("Trololo"))
+    println(strange(List("Trololo")))
+//    strange(1)
   }
 }
