@@ -1,14 +1,21 @@
 package org.scalatrain.basic.task
 
+import java.io.StringBufferInputStream
+
+import org.scalatrain.basic.OOP.Config
+import org.scalatrain.basic.Patterns.{Role, User}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import scala.util.parsing.combinator.RegexParsers
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
+import scala.language.dynamics
 
 object ParsersAndFutures {
   def main(args: Array[String]) {
 //    futures()
+    hack()
     parsers()
   }
 
@@ -27,15 +34,15 @@ object ParsersAndFutures {
     // You can define your own thread pool
 //    implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
-    val fs = for (i <- 1 to 300 reverse) yield Future(calc(i))
+//    val fs = for (i <- 1 to 300 reverse) yield Future(calc(i))
     Thread.sleep(5000)
 
     println("==================")
 
-    val f = Future.sequence(fs)
+//    val f = Future.sequence(fs)
 
-    f.onComplete {
-      case Success(results) =>
+    /*f.onComplete {
+      case Success(results) => println(results)
       case Failure(e) => e.printStackTrace
     }
 
@@ -45,9 +52,90 @@ object ParsersAndFutures {
     val newF = f andThen {
       case Success(results) =>
       case Failure(e) => e.printStackTrace
-    }
+    }*/
 
     // Monad composition
+    val fu = Future {User(1, "Martin", "", 50, Role("Creator"))}
+    val fc = Future {new Config(Map("url" -> "jscala.org"))}
+    val timeout = Duration("1 min")
+    val user = Await.result(fu, timeout)
+    val conf = Await.result(fc, timeout)
+
+    val fn = fu.flatMap { case user =>
+      fc.map {
+        case c => user.name -> c.get("url")
+      }
+    }
+
+    val fn2 = for {
+      user <- fu
+      if user.age > 18
+      conf <- fc
+    } yield user.name -> conf.get("url")
+
+    fn
+    fn2
+
+
+    val f11 = Future(calc(100))
+    val f12 = Future(calc(200))
+    val f13 = Future(calc(300))
+    val f14 = Future.firstCompletedOf(Seq(f11, f12, f13))
+    println(Await.result(f14, timeout))
+
+
+    val p = Promise[Int]()
+
+
+
+    val ff = p.future
+
+    Future {
+      p.complete(Try(42))
+    }
+
+    println(Await.result(ff, timeout))
+
+
+    type Closable =
+    {
+      def close(): Unit
+    }
+
+    def withResource[A <: Closable](r: A)(f: A => Unit) = {
+      val res = f(r)
+      r.close()
+      res
+    }
+
+    class Res {
+      def close(): Unit = println("HEHE")
+    }
+
+    withResource(new StringBufferInputStream("Hello"))(s => s.read())
+    withResource(new Res)(println)
+
+
+
+  }
+
+  def hack() = {
+
+    class Anything extends Dynamic {
+      def updateDynamic(field: String)(value: Any) = {
+        println(s"$field = $value")
+      }
+    }
+
+    val any = new Anything
+
+    any.deal = "Deal"
+    any.cpty = "MSFT"
+
+    val Expr = """(\w+)=(\d+)""".r
+    "asdf=24" match {
+      case Expr(name, value) => println(s"$name = $value")
+    }
 
   }
 
@@ -77,6 +165,10 @@ object ParsersAndFutures {
 
     def term = jsNum | jsString
 
+    def strings: Parser[List[JsString]] = jsString*
+
+    def nums: Parser[Option[JsNum]] = jsNum.?
+
     def binop: Parser[JsBinOp] = term ~ op ~ expr ^^ { case l ~ op ~ r => JsBinOp(op, l, r) }
 
     def expr = binop | term
@@ -90,6 +182,23 @@ object ParsersAndFutures {
     println(parser.parseExpr("\"string\""))
     println(parser.parseExpr(""" 1 - 2 + 3"""))
     println(parser.parseExpr(""" 1 - 2 + 3 + " is two" """))
+    println(parser.parseAll(parser.nums, "1"))
+  }
+
+  def internalDsl() = {
+
+    implicit def Num2JsNum(n: Int): Num2JsNum = new Num2JsNum(n)
+
+    class Num2JsNum(n: Int) {
+      def js = JsNum(n)
+    }
+
+    println( 1.js + 2 - 1 + "3" )
+    JsBinOp("+",
+      JsBinOp("-",
+        JsBinOp("+", JsNum(1), JsNum(2)),
+        JsNum(1)),
+      JsString("3"))
   }
 
 }

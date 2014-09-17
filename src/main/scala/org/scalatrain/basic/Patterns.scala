@@ -174,6 +174,10 @@ object Patterns {
 
   }
 
+  case class Role(name: String)
+  case class User(id: Int, name: String, email: String, age: Int, role: Role)
+
+
   def forExpressions(): Unit = {
     // Basically, for-expression converts to either:
     // foreach
@@ -181,8 +185,6 @@ object Patterns {
     // flatMap.map
     // flatMap.flatMap.map
 
-    case class Role(name: String)
-    case class User(id: Int, name: String, email: String, age: Int, role: Role)
 
     def getUserFromDb(id: Int): Option[User] =
       if (id == 1) Some(User(1, "Martin", "", 50, Role("Master"))) else None

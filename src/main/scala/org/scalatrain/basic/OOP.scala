@@ -111,6 +111,10 @@ object OOP {
     println(s"I'm Cat constructor")
   }
 
+  class Config(c: Map[String, String]) {
+    def get(n: String) = c(n)
+  }
+
   def traits() = {
     // Linearization
 
@@ -185,9 +189,7 @@ object OOP {
     println(compQ.get())
     println(compQ.get())
 
-    class Config(c: Map[String, String]) {
-      def get(n: String) = c(n)
-    }
+
 
     implicit val config = new Config(Map("url" -> "jscala.org"))
     def $(key: String)(implicit config: Config) = config.get(key)
