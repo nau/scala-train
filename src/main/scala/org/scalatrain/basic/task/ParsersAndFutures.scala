@@ -193,7 +193,7 @@ object ParsersAndFutures {
       def js = JsNum(n)
     }
 
-    println( 1.js + 2 - 1 + "3" )
+//    println( 1.js + 2 - 1 + "3" )
     JsBinOp("+",
       JsBinOp("-",
         JsBinOp("+", JsNum(1), JsNum(2)),
