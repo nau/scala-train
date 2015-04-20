@@ -1,6 +1,7 @@
 package org.scalatrain.adv
 
 import java.io.File
+import java.util.Date
 
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
@@ -75,7 +76,7 @@ class ScalaTestSpec extends UnitSpec with Inspectors {
 
 class PropertiesSpec extends UnitSpec with PropertyChecks {
   trait Fixture {
-    val evenInts = for (n <- Gen.choose(1, 1000)) yield 2 * n
+    val evenInts = for (n <- Gen.choose(0, 1000)) yield 2 * n
     val oneTwoThree = Gen.oneOf(1, 2, 3)
     val composition = for (i <- evenInts; j <- oneTwoThree) yield i -> j
   }
@@ -89,7 +90,13 @@ class PropertiesSpec extends UnitSpec with PropertyChecks {
 
     // Generators
     forAll (evenInts) { (n) => n % 2 should be (0) }
-    forAll(composition) { case t@(i, j) => println(t); i * j should be > (0) }
+
+    forAll(composition) { case t@(i, j) =>
+      whenever(i != 0) {
+        println(t)
+        i * j should be > (0)
+      }
+    }
   }
 
   it should "show table example" in {
@@ -102,4 +109,6 @@ class PropertiesSpec extends UnitSpec with PropertyChecks {
 
     forAll(users) { (u: String, p: String) => checkPwd(u, p) should be (true) }
   }
+
+  case class Trade(date: Date, notional: Double, direction: Byte)
 }
