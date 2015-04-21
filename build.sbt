@@ -21,3 +21,5 @@ libraryDependencies += "org.mockito" % "mockito-core" % "2.0.7-beta"
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.1"
 
 //testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports")
+
+libraryDependencies += "org.hibernate.javax.persistence" % "hibernate-jpa-2.0-api" % "1.0.1.Final"

@@ -1,9 +1,6 @@
 package org.scalatrain.adv
 
-import org.mockito.Mockito
 import org.scalatest._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.prop.PropertyChecks
 import org.scalatest.tagobjects._
 import org.scalatest.tags.Slow
 
@@ -34,7 +31,7 @@ class ScalaTestSuite extends FunSuite {
     fail("EPIC")
   }
 
-  def genTest(n: Int) = assert(List.fill(n)(1).size == n)
+  def genTest(n: Int): Unit = assert(List.fill(n)(1).size == n)
 
   for (n <- 1 to 10) test(s"An List should have size $n")(genTest(n))
 }

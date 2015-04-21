@@ -14,6 +14,7 @@ OptionValues with PropertyChecks
 class ScalaTestSpec extends UnitSpec with Inspectors {
   "I" should "show examples of matchers" in {
     val result = 3
+
     result should equal (3) // can customize equality
     result should === (3)   // can customize equality and enforce type constraints
     result should be (3)    // cannot customize equality, so fastest to compile
@@ -58,12 +59,23 @@ class ScalaTestSpec extends UnitSpec with Inspectors {
     forAll (xs) { x => x should be < 10 }
     all (xs) should be < 10
 //    all (List(1, 10, 20)) should be < 10
-//    every (List(1, 10, 20)) should be < 10
+    every (List(1, 10, 20)) should be < 10
     atLeast(2, xs) should be < 3 // atMost, exactly, between
+
+    val f = (a: String) => ???
+    val g = (a: Int) => ???
+
+    f(g(1))
+
+    val fg = f compose g
+    val fg1 = g andThen f
+
+    fg(1) == fg1(1)
 
     // Composing matchers
     val beScreenshot = startWith("Screen") and endWith("png")
     "Screenshot.png" should beScreenshot
+    ((f: File) => f.getPath) andThen beScreenshot
     val beFileScreenshot = beScreenshot compose { (f: File) => f.getPath }
     new File("Screenshot.png") should beFileScreenshot
 
@@ -83,24 +95,25 @@ class PropertiesSpec extends UnitSpec with PropertyChecks {
 
   "I" should "show examples to properties" in new Fixture {
 
-    forAll { (a: String, b: String) => {
+    forAll { (a: String, b: Int) => {
 //      println(a, b)
-      a.length + b.length should equal ((a + b).length)
+      a.length + b.toString.length should equal ((a + b.toString).length)
     } }
 
     // Generators
     forAll (evenInts) { (n) => n % 2 should be (0) }
 
-    forAll(composition) { case t@(i, j) =>
+    forAll(evenInts, oneTwoThree) { (i: Int, j: Int) =>
       whenever(i != 0) {
-        println(t)
+        println(i, j)
         i * j should be > (0)
       }
     }
   }
 
   it should "show table example" in {
-    val users = Table(("user",               "passwords"),
+    val users = Table(
+      ("user", "passwords"),
       ("admin", ""),
       ("guest", "guest")
     )
