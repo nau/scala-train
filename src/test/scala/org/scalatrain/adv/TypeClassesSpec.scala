@@ -40,7 +40,7 @@ class TypeClassesSpec extends UnitSpec {
 
   trait Num[A] {
     def plus(l: A, r: A): A
-    def div(l: A, r: A): A
+    def div(l: A, r: Int): A
   }
 
   object Operations {

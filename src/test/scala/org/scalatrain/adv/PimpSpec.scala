@@ -33,7 +33,7 @@ class PimpSpec extends UnitSpec {
   }
 
   // Pimp My Library
-  implicit class FraShowOps(t: Fx) {
+  implicit class FxShowOps(t: Fx) {
     def showInLog: String = t.price.toString
     def showInXml: String = t.toString
     def showInUi: String = t.toString
