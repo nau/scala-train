@@ -9,7 +9,7 @@ class ScalazSpec extends UnitSpec {
 
     1.some | 0 should be (1) // Some(1).getOrElse(0)
 
-//    "string".some.fold(Nil)(s => List(s))
+    "string".some.fold(Nil: List[String])(s => List(s))
     "string".some.cata(List(_), Nil) should be (List("string"))
 
     none | 1.some should be (1.some)
@@ -17,27 +17,27 @@ class ScalazSpec extends UnitSpec {
     val any: String = null
     (any ?? "default").length should be (7)
 
-
     // IdOps
 
     val len: String => Int = _.length
 
-    "string" |> len should be (6)
+    val dbl: Int => Double = _.toDouble
+
+    "string" |> len |> dbl should be (6.0) // len("string")
 
     "string" <| println should be ("string")
 
-    val dbl: Int => Double = _.toDouble
-
-    len >>> dbl apply "string" should === (6.0) // andThen
+    "string" |> (len >>> dbl) should === (6.0) // andThen
     dbl <<< len apply "string" should === (6.0) // compose
 
     NonEmptyList
   }
 
   it should "show Equal and Show examples" in {
-    1 =/= 1
-    // 1 === "foo"
+//    1 === 1
+    1 === "foo"
     1.some =/= 2.some
+
     1.shows should be ("1")
     1.println
   }
@@ -63,8 +63,8 @@ class ScalazSpec extends UnitSpec {
       final case class Failure[E, A](e: E) extends Validation[E, A]
     }
 
-    "ok".success[String] should be (Success("ok"))
-    "fail".failure[String] should be (Failure("fail"))
+    1.success[String] should be (Success(1))
+    "fail".failure[Int] should be (Failure("fail"))
 
     val result1 = 1.success[String]
     val result2 = "error 1".failure[Int]
@@ -72,7 +72,7 @@ class ScalazSpec extends UnitSpec {
     def calculate(a: Int, b: Int, c: Int) = a * b * c
 
     (result1, result2, result3) match {
-      case (Success(a), Success(b),Success(c)) => calculate(a, b, c).success[Int]
+      case (Success(a), Success(b), Success(c)) => calculate(a, b, c).success[Int]
       case _ => "fail".failure[Int]
     }
 
