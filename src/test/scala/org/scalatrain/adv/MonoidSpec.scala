@@ -2,6 +2,7 @@ package org.scalatrain.adv
 
 import java.util.Date
 
+import scala.annotation.tailrec
 import scala.language.higherKinds
 
 class MonoidSpec extends UnitSpec {
@@ -19,7 +20,7 @@ class MonoidSpec extends UnitSpec {
 
     plus(new Date(1), new Date(2)) should be(new Date(3))
 
-    /* def sum[A](ls: Seq[A])(implicit s: Semigroup[A]) =
+    /*def sum[A](ls: Seq[A])(implicit s: Semigroup[A]) =
       ls.foldLeft(0)(s.append(_, _).tupled) */
 
 
@@ -35,7 +36,7 @@ class MonoidSpec extends UnitSpec {
       def zero: Date = new Date(0)
     }
 
-    def sum[A](ls: Seq[A])(implicit m: Monoid[A]) =
+    def sum[A](ls: Seq[A])(implicit m: Monoid[A]): A =
       ls.foldLeft(m.zero)((a, e) => m.append(a, e))
 
     sum(List(new Date(1), new Date(2))) should be(new Date(3))
@@ -45,9 +46,13 @@ class MonoidSpec extends UnitSpec {
     import scalaz._
     import Scalaz._
 
-    1.some |+| 2.some should be(3.some)
-    Set(1) |+| Set(2) |+| Set(1) should be(Set(1, 2))
-    (1.some |+| none).orZero should be(1)
+    1.some ⊹ 2.some should be(3.some)
+    "1".some ⊹ "2".some should be("12".some)
+    Set(1) ⊹ Set(2) ⊹ Set(1) should be(Set(1, 2))
+
+    (List(List(1,2), List(3, 4)) |+| List(List(5), List(6))).println
+
+    (none[Int]).orZero should be(0)
   }
 
   "Monad" should "be shown" in {
@@ -55,9 +60,10 @@ class MonoidSpec extends UnitSpec {
     import Scalaz._
 
     trait Monad[A] {
+      // return, pure, point, constructor, you name it
       def pure(a: A): Monad[A]
 
-      // return, pure, point, constructor, you name it
+
       def bind[B](f: A => Monad[B]): Monad[B]
 
 
@@ -66,17 +72,15 @@ class MonoidSpec extends UnitSpec {
 
       final def map[B: Monad](f: A => B): Monad[B] = {
         val mb = implicitly[Monad[B]]
-        bind(a => mb.pure(f(a)))
-        bind(f >>> mb.pure)
+
+        flatMap(a => mb.pure(f(a)))
+
+
+        bind(f andThen mb.pure)
+
         f >>> mb.pure |> bind
       }
     }
-
-    class Opt[A] extends Monad[A] {
-      override def pure(a: A): Opt[A] = ???
-      override def bind[B](f: (A) => Monad[B]): Opt[B] = ???
-    }
-
   }
 
   "Monad examples" should "be shown" in {
@@ -91,15 +95,19 @@ class MonoidSpec extends UnitSpec {
     }
 
     def listCalc[A : Numeric](a: A, b: A) = calc[List, A](a, b)
+
     def optionCalc[A : Numeric](a: A, b: A) = calc[Option, A](a, b)
 
     listCalc(1, 2) should be (List(3))
+
     optionCalc(BigDecimal(2), BigDecimal(3)) should be (BigDecimal(5).some)
 
-    def calcF[F[_] : Monad, A : Monoid](as: F[A], bs: F[A]) =
-    for (a <- as; b <- bs) yield a |+| b
+    def calcF[F[_] : Monad, A : Monoid](as: F[A], bs: F[A]) = {
+      for (a <- as; b <- bs) yield a |+| b
+    }
 
     calcF(List(1, 2), List(3, 4)) should be (List(4, 5, 5, 6))
+
     calcF(2.some, none) should be (none)
   }
 

@@ -22,7 +22,7 @@ class LensSpec extends UnitSpec with PropertyChecks {
   "Iso" should "be useful" in {
     case class User(name: String)
 
-    val userIso = Iso[User, String](_.name, User)
+    val userIso = Iso[User, String](_.name, User.apply(_))
     val s2l = Iso[String, List[Char]](_.toList, _.toString)
     val u2l = userIso compose s2l
 
@@ -30,7 +30,7 @@ class LensSpec extends UnitSpec with PropertyChecks {
 
     forAll((n: String) => {
       val u = User(n)
-      userIso.from(userIso.to(u)) should ===(u)
+      userIso.from(userIso.to(u)) should === (u)
     })
 
     forAll((s: String) => userIso.to(userIso.from(s)) should ===(s))
@@ -51,21 +51,28 @@ class LensSpec extends UnitSpec with PropertyChecks {
       def modify(f: B => B): A => A = a => modifyOption(f)(a).getOrElse(a)
 
       def compose[C](p: Prism[B, C]): Prism[A, C] = Prism(
-        a => getOption(a).flatMap(p.getOption),
+        a => getOption(a).flatMap(b => p.getOption(b)),
         c => p.from andThen from apply c
       )
     }
 
     implicit class IsoToPrism[A, B](iso: Iso[A, B]) {
-      def prism: Prism[A, B] = ???
+      def prism: Prism[A, B] = Prism(
+        getOption = a => Some(iso.to(a)),
+        from = iso.from
+      )
     }
+    case class User(name: String)
 
+    val userIso = Iso[User, String](_.name, User.apply(_))
 
-    val jNum: Prism[Json, Double] = Prism({
+    userIso.prism
+
+    val jNum: Prism[Json, Double] = Prism(getOption = {
       case JNumber(v) => Some(v)
       case _ => None
     },
-    JNumber
+    d => JNumber(d)
     )
     jNum.modify(_ + 1)(JNumber(2.0)) should be(JNumber(3.0))
     jNum.modify(_ + 1)(JString("")) should be(JString(""))
@@ -88,15 +95,43 @@ class LensSpec extends UnitSpec with PropertyChecks {
   case class Addr(host: String, port: Int)
   case class Server(enabled: Boolean, addr: Addr)
 
+  val conf = Config(List(Server(true, Addr("localhost", 8080))))
+  def modPort(c: Config, port: Int): Config = {
+    c.copy(servers = c.servers.map(s => s.copy(addr = s.addr.copy(port = port))))
+  }
+
+
   "Lens" should "be useful" in {
 
     case class Lens[S, A](get: S => A, set: (A, S) => S) {
+
       def modify(f: A => A): S => S = s => set(f(get(s)), s)
 
-      def compose[B](other: Lens[A, B]): Lens[S, B] = ???
+      def compose[B](other: Lens[A, B]): Lens[S, B] = {
+        Lens(
+          get = s => other.get(get(s)),
+          set = (b, s) => set(other.set(b, get(s)), s)
+        )
+      }
 
-      def compose[B](other: Iso[A, B]): Lens[S, B] = ???
+      def compose[B](other: Iso[A, B]): Lens[S, B] = {
+        Lens(
+          get = s => other.to(get(s)),
+          set = (b, s) => set(other.from(b), s)
+        )
+      }
     }
+
+    val l = Lens[Config, List[Server]](
+      get = c => c.servers,
+      set = (s: List[Server], c: Config) => c.copy(servers = s)
+    )
+
+    val serversRemover = l.modify(ss => Nil)
+
+    val noServers = serversRemover(conf)
+
+    def serversAdder(s: Server) = l.modify(ss => s :: ss)
 
   }
 
@@ -127,8 +162,12 @@ class LensSpec extends UnitSpec with PropertyChecks {
     val mainServer = servers >=> headServer
     (mainServer =>= toggle)(conf).toString.println
 
-    val port: Lens[Addr, Int] = ???
-    def modPort(f: Int => Int): Config => Config = ???
+    val port: Lens[Addr, Int] = Lens.lensu[Addr, Int](
+      (s, p) => s.copy(port = p), _.port)
+
+    def modPort(f: Int => Int): Config => Config = {
+      servers =>= (_.map((addr >=> port) =>= f))
+    }
 
     val modified = modPort(_ + 1)(conf)
 
