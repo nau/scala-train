@@ -1,6 +1,7 @@
 package org.scalatrain.adv
 
-import org.scalatrain.adv.macros.{MacroExample, GenLens}
+import scala.language.experimental.macros
+import org.scalatrain.adv.macros.{Str, MacroExampleImpl, MacroExample, GenLens}
 
 class MacroSpec extends UnitSpec {
   import MacroExample._
@@ -10,6 +11,7 @@ class MacroSpec extends UnitSpec {
       val b = 2
       println(a + b)
     }
+
     println(code)
 
     def longCalculation = {Thread.sleep(150); 1}
@@ -18,8 +20,9 @@ class MacroSpec extends UnitSpec {
     val ex = the [RuntimeException] thrownBy asrt("1".toInt == 2)
     println(ex.getMessage)
 
-    admin.lens.name
+//    println(admin.lens.name)
   }
+
   case class User(name: String, age: Int)
 
   val admin = User("admin", 45)
@@ -30,5 +33,15 @@ class MacroSpec extends UnitSpec {
     val nameL = GenLens[User](_.name)
 
     nameL.get(admin) should be ("admin")
+
+
+
+
+
+
+//    def calc[A : Str](a: A) = implicitly[Str[A]].str(a)
+    def calc[A](a: A)(implicit ev: Str[A]) = ev.str(a)
+
+    calc(2+2) should be ("4")
   }
 }

@@ -63,6 +63,40 @@ object GenLensMacroImpl {
     """)
   }
 
+  def mkLensImpl2[S: c.WeakTypeTag](c: Context)(fieldName: c.Expr[String]) = {
+    import c.universe._
+
+    val sTpe = weakTypeOf[S]
+
+    val q"$asdf" = fieldName.tree
+    val strFieldName = asdf.toString.drop(1).dropRight(1)
+
+    println(strFieldName)
+
+/*    val fieldMethod = getDeclarations(c)(sTpe).collectFirst {
+      case m: MethodSymbol if m.isCaseAccessor && m.name.decodedName.toString == strFieldName => m
+    }.getOrElse(c.abort(c.enclosingPosition, s"Cannot find method $strFieldName in $sTpe"))*/
+
+    val constructor = getDeclarations(c)(sTpe).collectFirst {
+      case m: MethodSymbol if m.isPrimaryConstructor => m
+    }.getOrElse(c.abort(c.enclosingPosition, s"Cannot find constructor in $sTpe"))
+
+    println(strFieldName  )
+    println(show(getParameterLists(c)(constructor).head.map(_.name.decodedName.toString)))
+
+    val field = getParameterLists(c)(constructor).head
+      .find(_.name.decodedName.toString == strFieldName)
+      .getOrElse(c.abort(c.enclosingPosition, s"Cannot find constructor field named $strFieldName in $sTpe"))
+
+    val aTpe = field.typeSignature
+
+    c.Expr( q"""
+      import scalaz.Lens
+      Lens.lensu[$sTpe, $aTpe] ((s: $sTpe, a: $aTpe) => s.copy($field = a),
+      (s: $sTpe) => s.$field)
+    """)
+  }
+
   def getDeclarations(c: Context)(tpe: c.universe.Type): c.universe.MemberScope =
     tpe.decls
 
