@@ -17,6 +17,7 @@ object ParsersAndFutures {
 //    futures()
     hack()
     parsers()
+    ordersDsl()
   }
 
   def futures() = {
@@ -199,6 +200,46 @@ object ParsersAndFutures {
         JsBinOp("+", JsNum(1), JsNum(2)),
         JsNum(1)),
       JsString("3"))
+  }
+
+
+  import scala.util.parsing.combinator.syntactical._
+
+  object OrderDSL extends StandardTokenParsers {
+    lexical.delimiters ++= List("(", ")", ",")
+    lexical.reserved += ("buy", "sell", "shares", "at", "max", "min", "for", "trading", "account")
+
+    def instr = trans ~ account_spec
+
+    def trans = "(" ~> repsep(trans_spec, ",") <~ ")"
+
+    def trans_spec = buy_sell ~ buy_sell_instr
+
+    def account_spec = "for" ~> "trading" ~> "account" ~> stringLit
+
+    def buy_sell = "buy" | "sell"
+
+    def buy_sell_instr = security_spec ~ price_spec
+
+    def security_spec = numericLit ~ ident ~ "shares"
+
+    def price_spec = "at" ~ ("min" | "max") ~ numericLit
+
+    def parseDsl(dsl: String) = {
+      instr(new lexical.Scanner(dsl)) match {
+        case Success(r, _) => println(r)
+        case Failure(msg, _) => println(msg)
+        case Error(msg, _) => println(msg)
+      }
+    }
+
+  }
+
+  def ordersDsl() = {
+    val dsl =
+      """(buy 100 IBM shares at max 45, sell 40 Sun shares at min 24,buy 25 CISCO shares at max 56)
+         |for trading account "A1234" """.stripMargin
+    OrderDSL.parseDsl(dsl)
   }
 
 }
