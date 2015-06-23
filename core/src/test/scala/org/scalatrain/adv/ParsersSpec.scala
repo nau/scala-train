@@ -27,51 +27,25 @@ class ParsersSpec extends UnitSpec {
   }
 
   trait Parser[+A] extends (String => Result[A]) {
-    def map[B](f: A => B): Parser[B] = parser(in => this(in) map f)
+    def map[B](f: A => B): Parser[B] = ???
 
-    def ~[B](that: => Parser[B]): Parser[(A, B)] = parser { in =>
-      this(in) match {
-        case Success(a, rem) => that(rem) match {
-          case Success(b, rem) => Success((a, b), rem)
-          case f: Failure => f
-        }
-        case f: Failure => f
-      }
-    }
+    def ~[B](that: => Parser[B]): Parser[(A, B)] = ???
 
-    def |[U >: A](that: Parser[U]): Parser[U] = parser { in =>
-      val r = this(in)
-      if (r.success) r else that(in)
-    }
+    def |[U >: A](that: Parser[U]): Parser[U] = ???
 
-    def * : Parser[List[A]] = parser { in =>
-      val elems = ListBuffer[A]()
-      @tailrec def applyParser(rest: String): Result[List[A]] = {
-        this(rest) match {
-          case Success(v, r) =>
-            elems += v
-            applyParser(r)
-          case f => Success(elems.toList, rest)
-        }
-      }
-      applyParser(in)
-    }
+    def * : Parser[List[A]] = ???
 
-    def ~>[B](that: => Parser[B]): Parser[B] = this ~ that map {
-      case (a, b) => b
-    }
+    def ~>[B](that: => Parser[B]): Parser[B] = ???
 
-    def + : Parser[List[A]] = this ~ this.* map {
-      case (a, b) => a :: b
-    }
+    def + : Parser[List[A]] = ???
 
-    def ? : Parser[Option[A]] = map(Some(_)) | parser(in => Success(None, in))
+    def ? : Parser[Option[A]] = ???
   }
 
   implicit def keyword(str: String): Parser[String] = new Parser[String] {
     def apply(s: String) = {
       val trunc = s take str.length
-      lazy val errorMessage = "Expected '%s' got '%s'".format(str, trunc)
+      lazy val errorMessage = s"Expected '$str' got '$trunc'"
       if (trunc == str) Success(str, s drop str.length) else Failure(errorMessage)
     }
   }
@@ -83,20 +57,6 @@ class ParsersSpec extends UnitSpec {
   "Parsers" should "be useful" in {
     val clsParser = keyword("class")
     clsParser("class").success should be(true)
-  }
-
-  class SequenceParser[+A, +B](l: => Parser[A],
-                               r: => Parser[B]) extends Parser[(A, B)] {
-    lazy val left = l
-    lazy val right = r
-
-    def apply(s: String) = left(s) match {
-      case Success(a, rem) => right(rem) match {
-        case Success(b, rem) => Success((a, b), rem)
-        case f: Failure => f
-      }
-      case f: Failure => f
-    }
   }
 
   "Sequence combinator" should "be useful" in {
