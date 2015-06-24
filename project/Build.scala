@@ -5,6 +5,14 @@ object ScalaTrainBuild extends Build {
   val macroVersion = "2.0.1"
   val paradisePlugin = compilerPlugin("org.scalamacros" % "paradise" % macroVersion cross CrossVersion.full)
 
+  val akkaVersion = "2.3.11"
+  val akkaDeps = Seq(
+    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+    "com.typesafe.akka" %% "akka-kernel" % akkaVersion,
+    "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+    "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % akkaVersion
+  )
   val defaultSettings = Seq(
     version := "1.0",
     scalaVersion := "2.11.6",
@@ -24,7 +32,7 @@ object ScalaTrainBuild extends Build {
       "org.mockito" % "mockito-core" % "2.0.7-beta",
       "org.scalaz" %% "scalaz-core" % "7.1.1",
       "org.hibernate.javax.persistence" % "hibernate-jpa-2.0-api" % "1.0.1.Final"
-    )
+    ) ++ akkaDeps
   )
 
   lazy val root: Project = Project(
