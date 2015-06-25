@@ -36,12 +36,6 @@ class TradingActor extends Actor {
     t
   }
 
-
-  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(10, 1.minute) {
-    case _: RuntimeException => Restart
-    case _: Exception => Escalate
-  }
-
   def receive = {
     case t: Trade =>
       val p = process(t)
