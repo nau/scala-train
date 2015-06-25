@@ -17,17 +17,8 @@ case class Trade(id: Int, notional: Int)
  * Trades with same id should be `process`ed sequentially
  */
 class TradingSupervisor extends Actor {
-  import context.dispatcher
-  implicit val timeout = Timeout(1.second)
-  val trades = mutable.HashMap[Int, ActorRef]()
-
-  def getOrCreate(id: Int) =
-    trades.getOrElseUpdate(id, context.actorOf(Props(classOf[TradingActor]), id.toString))
-
   def receive = {
     case t: Trade =>
-      val s = sender()
-      getOrCreate(t.id) ? t onComplete(r => s ! r)
   }
 }
 
@@ -39,10 +30,6 @@ class ServiceActor extends Actor {
 }
 
 class TradingActor extends Actor {
-  import context.dispatcher
-  implicit val timeout = Timeout(1.second)
-  var service1 = context.actorOf(Props(classOf[ServiceActor]))
-  var service2 = context.actorOf(Props(classOf[ServiceActor]))
 
   def process(t: Trade): Trade = {
     Thread.sleep(1000)
@@ -58,12 +45,17 @@ class TradingActor extends Actor {
   def receive = {
     case t: Trade =>
       val p = process(t)
-      val f = Future.firstCompletedOf(Seq(service1 ? p, service2 ? p))
-      val s = sender()
-      f onComplete(r => s ! r)
   }
 }
 
+
+/**
+ * Initialization patterns
+ * constructor
+ * preStart
+ * message passing
+ *
+ */
 object TradingApp extends App {
 
   val system = ActorSystem()
@@ -73,13 +65,10 @@ object TradingApp extends App {
 
   val trader = system.actorOf(Props(classOf[TradingSupervisor]))
 
-  val f = trader ? Trade(Random.nextInt(5), 1)
+  val f = trader ! Trade(Random.nextInt(5), 1)
 //  val f = Future.traverse(1 to 10)(n => trader ? Trade(Random.nextInt(5), n))
 
-  f.onComplete {
-    case r => println(r)
-  }
-
-  Await.result(f, 10.seconds)
-
+//  f.onComplete {
+//    case r => println(r)
+//  }
 }
