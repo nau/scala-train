@@ -11,6 +11,7 @@ object ScalaTrainBuild extends Build {
     "com.typesafe.akka" %% "akka-kernel" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+    "com.typesafe.akka" %% "akka-persistence-experimental" % akkaVersion,
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion
   )
   val defaultSettings = Seq(
