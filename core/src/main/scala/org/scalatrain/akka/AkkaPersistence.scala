@@ -44,9 +44,10 @@ class EventSourcingActor extends PersistentActor {
       }
     case "snap"  => saveSnapshot(state)
     case SaveSnapshotSuccess(_) => println(s"Snapshot saved! Sequence number $lastSequenceNr")
+    case SaveSnapshotFailure(_, t) => println(s"Snapshot failed! $t")
     case "print" => println(state)
     case "clean" =>
-      deleteMessages(lastSequenceNr, permanent = true);
+      deleteMessages(lastSequenceNr, permanent = true)
       println("Deleted messages!")
       deleteSnapshots(SnapshotSelectionCriteria.Latest)
       println("Deleted snapshots!")
@@ -55,11 +56,12 @@ class EventSourcingActor extends PersistentActor {
   def validate(c: Cmd) = true
 
   val receiveRecover: Receive = {
-    case evt: Evt                                 => println(s"Recovering... $evt"); updateState(evt)
+    case evt: Evt => println(s"Recovering... $evt"); updateState(evt)
     case SnapshotOffer(meta, snapshot: ExampleState) =>
       println("Got a Snapshot for SN:" + meta.sequenceNr)
       state = snapshot
     case RecoveryCompleted => println(s"Recovery completed!")
+    case RecoveryFailure(t) => println(s"Recovery failed!")
   }
 
 
@@ -69,7 +71,7 @@ class EventSourcingActor extends PersistentActor {
    */
 //  @throws[Exception](classOf[Exception])
 //  override def preStart(): Unit = {
-    // self ! Recover(toSequenceNr = 457L)
+//     self ! Recover(SnapshotSelectionCriteria(123L, 11111111L))
 //  }
 }
 

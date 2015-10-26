@@ -10,7 +10,6 @@ class SimpleClusterListener extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
 
-  // Cluster.get(system).join
   // Cluster.get(system).joinSeedNodes
   cluster.registerOnMemberUp {
     if (cluster.selfRoles.contains("frontend")) {
@@ -69,6 +68,7 @@ class TransformationBackend extends Actor {
     case state: CurrentClusterState =>
       state.members.filter(_.status == MemberStatus.Up) foreach register
     case MemberUp(m) => register(m)
+      println(s"Memeber is up ${m.address}")
   }
 
   def register(member: Member): Unit =
@@ -92,10 +92,12 @@ class TransformationFrontend extends Actor {
 
     case job: TransformationJob =>
       jobCounter += 1
-      backends(jobCounter % backends.size) forward job
-      println(s"Forwarded job $jobCounter to backend")
+      val ref = backends(jobCounter % backends.size)
+      ref forward job
+      println(s"Forwarded job $jobCounter to backend $ref")
     case TransformationResult(res) => println(s"Got result $res")
     case BackendRegistration if !backends.contains(sender()) =>
+      println(s"Got backend $sender")
       context watch sender()
       backends = backends :+ sender()
 
@@ -137,7 +139,7 @@ object AkkaCluster {
             |
             |   auto-down-unreachable-after = 10s
             |
-            |   roles = ["backend", "frontend"]
+            |   roles = ["backend"]
             | }
             |}
         """.stripMargin).withFallback(ConfigFactory.load())
