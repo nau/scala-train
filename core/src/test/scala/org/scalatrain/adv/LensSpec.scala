@@ -57,10 +57,7 @@ class LensSpec extends UnitSpec with PropertyChecks {
     }
 
     implicit class IsoToPrism[A, B](iso: Iso[A, B]) {
-      def prism: Prism[A, B] = Prism(
-        getOption = a => Some(iso.to(a)),
-        from = iso.from
-      )
+      def prism: Prism[A, B] = ???
     }
     case class User(name: String)
 
@@ -97,42 +94,30 @@ class LensSpec extends UnitSpec with PropertyChecks {
 
   val conf = Config(List(Server(true, Addr("localhost", 8080))))
   def modPort(c: Config, port: Int): Config = {
-    c.copy(servers = c.servers.map(s => s.copy(addr = s.addr.copy(port = port))))
+    ???
   }
 
 
   "Lens" should "be useful" in {
 
+    modPort(conf, 8088).servers.head.addr.port should be(8088)
+
     case class Lens[S, A](get: S => A, set: (A, S) => S) {
 
-      def modify(f: A => A): S => S = s => set(f(get(s)), s)
+      def modify(f: A => A): S => S = s => ???
 
-      def compose[B](other: Lens[A, B]): Lens[S, B] = {
-        Lens(
-          get = s => other.get(get(s)),
-          set = (b, s) => set(other.set(b, get(s)), s)
-        )
-      }
+      def compose[B](other: Lens[A, B]): Lens[S, B] = ???
 
-      def compose[B](other: Iso[A, B]): Lens[S, B] = {
-        Lens(
-          get = s => other.to(get(s)),
-          set = (b, s) => set(other.from(b), s)
-        )
-      }
+      def compose[B](other: Iso[A, B]): Lens[S, B] = ???
     }
 
-    val l = Lens[Config, List[Server]](
-      get = c => c.servers,
-      set = (s: List[Server], c: Config) => c.copy(servers = s)
-    )
+    def l = Lens[Config, List[Server]](???, ???)
 
-    val serversRemover = l.modify(ss => Nil)
+    def serversRemover = l.modify(ss => Nil)
 
-    val noServers = serversRemover(conf)
+    serversRemover(conf).servers should be(empty)
 
     def serversAdder(s: Server) = l.modify(ss => s :: ss)
-
   }
 
   "Scalaz Lens" should "be useful" in {
@@ -162,12 +147,8 @@ class LensSpec extends UnitSpec with PropertyChecks {
     val mainServer = servers >=> headServer
     (mainServer =>= toggle)(conf).toString.println
 
-    val port: Lens[Addr, Int] = Lens.lensu[Addr, Int](
-      (s, p) => s.copy(port = p), _.port)
-
-    def modPort(f: Int => Int): Config => Config = {
-      servers =>= (_.map((addr >=> port) =>= f))
-    }
+    val port: Lens[Addr, Int] = ???
+    def modPort(f: Int => Int): Config => Config = ???
 
     val modified = modPort(_ + 1)(conf)
 
