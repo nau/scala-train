@@ -7,7 +7,12 @@ import org.scalatest.tags.Slow
 @Slow
 class ScalaTestSuite extends FunSuite {
   test("An empty List should have size 0") {
-    assert(Nil.size == 0)
+    assert(Nil.size == 1)
+    assertResult(0) {
+      val l = List(1,2,3)
+      val r = l.takeWhile(_ > 10)
+      r.size
+    }
     intercept[NoSuchElementException] {
       Set.empty.head
     }
