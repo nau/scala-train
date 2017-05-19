@@ -103,7 +103,7 @@ object OOP {
     println(s"I'm FourLegged constructor")
   }
 
-  trait TwoLegged extends HasLegs {
+  trait TwoLegged extends HasLegs  {
     println(s"I'm TwoLegged constructor")
   }
 
@@ -120,7 +120,7 @@ object OOP {
 
     // Cat ￼ ￼ FourLegged ￼ ￼ HasLegs ￼ ￼ Furry ￼ ￼ Animal ￼ ￼ AnyRef ￼ ￼ Any
     val cat = new Cat
-    val man = new Animal with TwoLegged with HasHands
+    val man = new Animal  with TwoLegged with HasHands
 
     def compound(animal: HasLegs with HasHands) = {}
 //        compound(cat)   // Won't compile
@@ -287,6 +287,7 @@ object OOP {
 
     calculate2(new Complex(1), new Complex(2))
 
+    def create[A](cls: Class[A]) = cls.newInstance()
 
     def bean[A : Manifest](f: A => Unit): A = {
       val a = implicitly[Manifest[A]].runtimeClass.newInstance.asInstanceOf[A]

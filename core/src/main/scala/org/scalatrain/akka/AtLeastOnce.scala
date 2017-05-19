@@ -17,6 +17,8 @@ class MyPersistentActor(destination: ActorPath)
   extends PersistentActor with AtLeastOnceDelivery {
 
 
+  override def persistenceId: String = "MyPersistentActor"
+
   override def redeliverInterval: FiniteDuration = 1.second
 
   def receiveCommand: Receive = {
@@ -31,7 +33,7 @@ class MyPersistentActor(destination: ActorPath)
 
   def updateState(evt: Event): Unit = evt match {
     case MsgSent(s) =>
-      deliver(destination, deliveryId => Msg(deliveryId, s))
+      deliver(destination)(deliveryId => Msg(deliveryId, s))
 
     case MsgConfirmed(deliveryId) =>
       confirmDelivery(deliveryId)
@@ -59,5 +61,5 @@ object AtLeastOnce extends App {
   sender ! "hello3"
 
   Thread.sleep(5000)
-  system.shutdown()
+  system.terminate()
 }

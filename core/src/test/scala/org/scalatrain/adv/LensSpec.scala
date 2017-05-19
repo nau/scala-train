@@ -102,7 +102,7 @@ class LensSpec extends UnitSpec with PropertyChecks {
 
     modPort(conf, 8088).servers.head.addr.port should be(8088)
 
-    case class Lens[S, A](get: S => A, set: (A, S) => S) {
+    case class Lens[S, A](get: S => A, set: (S, A) => S) {
 
       def modify(f: A => A): S => S = s => ???
 

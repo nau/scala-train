@@ -1,4 +1,4 @@
-package org.scalatrain.adv
+/*package org.scalatrain.adv
 
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
@@ -61,4 +61,4 @@ abstract class GoogleSpec extends WebSpec {
     quit()
   }
 }
-
+         */

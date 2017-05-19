@@ -17,6 +17,8 @@ object Patterns {
    * 2. Pre-defined equals, hashCode and toString methods
    * 3. Generated apply() method that calls default constructor
    * 4. Generated unapply() method for pattern matching
+   * 5. Generated copy()
+   * 6. Implements Serializable
    */
   abstract class JsExpr
   case class JsString(value: String) extends JsExpr
@@ -218,18 +220,18 @@ object Patterns {
 
 
     def saveDataForUser3(idOpt: Option[Int], dataOpt: Option[String]) = {
-      for (id <- idOpt;
+      for (id   <- idOpt;
            user <- getUserFromDb(id);
            data <- dataOpt)
         println(s"Data $data saved for user $user")
-    }
+      }
 
 
 
 
     def saveDataForUser4(idOpt: Option[Int], dataOpt: Option[String]) = {
       for {
-        id <- idOpt
+        id   <- idOpt
         user <- getUserFromDb(id)
         data <- dataOpt
       } println(s"Data $data saved for user $user")

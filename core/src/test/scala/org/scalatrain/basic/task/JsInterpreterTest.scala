@@ -7,6 +7,7 @@ class JsInterpreterTest extends FunSuite with Matchers {
 
   test("Num should be num") {
     jsrun(JsNum(1)) should be("1")
+    jsrun(JsString("Hello")) should be("Hello")
   }
 
   test("2 + 3 = 5") {
@@ -24,5 +25,11 @@ class JsInterpreterTest extends FunSuite with Matchers {
   test("sum strings and nums ") {
     jsrun(JsBinOp("+", JsString("3"), JsNum(2))) should be("32")
     jsrun(JsBinOp("+", JsNum(2), JsString("3"))) should be("23")
+    jsrun(JsBinOp("-", JsNum(2), JsString("3"))) should be("-1")
+
+    // 2 - "3" + "5"
+    jsrun(JsBinOp("+", JsBinOp("-", JsNum(2), JsString("3")), JsString("5"))) should be("-15")
+
+//    jsrun(2.js - "3" + "5") should be("-15")
   }
 }

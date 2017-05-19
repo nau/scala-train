@@ -56,7 +56,7 @@ class ScalaTestSpec extends UnitSpec with Inspectors {
 
     // Inspectors
     val xs = List(1, 2, 3)
-    forAll (xs) { x => x should be < 10 }
+//    forAll (xs) { x => x should be < 10 }
     all (xs) should be < 10
 //    all (List(1, 10, 20)) should be < 10
     every (List(1, 10, 20)) should be < 10

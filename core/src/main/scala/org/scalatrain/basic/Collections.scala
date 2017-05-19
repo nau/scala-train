@@ -79,6 +79,7 @@ object Collections {
 
     // Set: HashSet
     val hs = mutable.HashSet("red", "green")
+    hs("blue") = false
     hs += "blue"
     hs -= "red"
     hs.contains("green")

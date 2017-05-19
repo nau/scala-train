@@ -1,6 +1,5 @@
 package org.scalatrain.akka
 
-import akka.actor.Actor.Receive
 import akka.actor._
 import akka.persistence._
 
@@ -47,7 +46,7 @@ class EventSourcingActor extends PersistentActor {
     case SaveSnapshotFailure(_, t) => println(s"Snapshot failed! $t")
     case "print" => println(state)
     case "clean" =>
-      deleteMessages(lastSequenceNr, permanent = true)
+      deleteMessages(lastSequenceNr)
       println("Deleted messages!")
       deleteSnapshots(SnapshotSelectionCriteria.Latest)
       println("Deleted snapshots!")
@@ -61,8 +60,9 @@ class EventSourcingActor extends PersistentActor {
       println("Got a Snapshot for SN:" + meta.sequenceNr)
       state = snapshot
     case RecoveryCompleted => println(s"Recovery completed!")
-    case RecoveryFailure(t) => println(s"Recovery failed!")
   }
+
+  override protected def onRecoveryFailure(cause: Throwable, event: Option[Any]): Unit = super.onRecoveryFailure(cause, event)
 
 
   /**
@@ -74,43 +74,6 @@ class EventSourcingActor extends PersistentActor {
 //     self ! Recover(SnapshotSelectionCriteria(123L, 11111111L))
 //  }
 }
-
-
-class EventViewActor extends PersistentView {
-  override def persistenceId: String = "sample-id-1"
-  override def viewId: String = "sample-id-1-view"
-
-  def receive = {
-    case payload if isPersistent =>
-    // handle message from journal...
-      println(s"View message from event processor journal: $payload")
-    case payload                 =>
-      // handle message from user-land...
-    println(s"View message from event processor actor: $payload")
-  }
-}
-
-
-
-import akka.actor.FSM
-import akka.persistence.{ Persistent, Processor }
-
-class PersistentDoor extends Processor with FSM[String, Int] {
-  startWith("closed", 0)
-
-  when("closed") {
-    case Event(Persistent("open", _), counter) =>
-      goto("open") using (counter + 1) replying (counter)
-  }
-
-  when("open") {
-    case Event("print", counter) => println(s"The door is open, opened $counter times"); stay()
-    case Event(Persistent("close", _), counter) =>
-      goto("closed") using (counter + 1) replying (counter)
-  }
-
-}
-
 
 
 object AkkaPersistence extends App {
@@ -138,5 +101,5 @@ object AkkaPersistence extends App {
 //  doorActor ! "print"
 
   Thread.sleep(1000)
-  system.shutdown()
+  system.terminate()
 }
