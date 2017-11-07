@@ -16,7 +16,7 @@ object ScalaTrainBuild extends Build {
   )
   val defaultSettings = Seq(
     version := "1.0",
-    scalaVersion := "2.12.2",
+    scalaVersion := "2.12.4",
     //testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports"),
     scalacOptions     ++= Seq(
       "-encoding", "UTF-8",
